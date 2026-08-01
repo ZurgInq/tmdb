@@ -1,0 +1,6 @@
+Your task is to extract emotions from the review text.
+Only emotions from the film and the plot; emotions should not be directed at the director, actors, crew, or other people.
+List the items without explanations or comments, separated by commas. No more than 10 items. 
+Example answer:`радость,грусть`
+
+Below is the text of the review:

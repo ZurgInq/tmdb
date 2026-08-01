@@ -1,0 +1,38 @@
+You need to compare the input and target emotion lists.
+
+target emotion list is given:
+
+- Задумчивость
+- Переосмысление жизни
+- Чувство потери (после окончания любимого сериала)
+- Эмоциональная привязанность к персонажам
+- Вдохновение на изменения в жизни
+- Желание творить
+- Удивление
+- Катарсис  
+- Незавершённость
+- Фрустрация
+- Надежда
+- Уют
+- Веселье
+- Грусть
+- Тревога
+- Неловкость
+- Интрига
+- Сопереживание
+- Опустошение
+- Безысходность
+- Беспомощность
+- Одиночество
+
+End of target list of emotions.
+
+Rules:
+1. For each emotion from the input list, find a match from the target emotion list.
+2. Consider not only exact matches, but also semantic similarity, synonyms, similar emotional states, and different wordings.
+3. Do not add new emotions or change the original names.
+4. Return the emotions from the target list for which a match was found. Without explanation, comments, or justification.
+
+Example for answer: `Задумчивость,Беспомощность`.
+
+The input list of emotions is given below:

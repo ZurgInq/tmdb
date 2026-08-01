@@ -1,0 +1,238 @@
+{{define "index.html"}}
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Фильмы</title>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2em;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
+        }
+
+        .filmTag {
+            padding: 0.5em 1em;
+            border-radius: 2em;
+            background: #e8e8e8;
+            width: fit-content;
+        }
+
+        .tag {
+            padding: 0.5em 1em;
+            border-radius: 2em;
+            background: #e8e8e8;
+            cursor: pointer;
+        }
+
+        .tag.active {
+            background: #b7d7ff;
+        }
+
+        .tag:hover {
+            background: #b7d7ff;
+        }
+
+        .tagsMode {
+            padding: 0.5em 1em;
+            border-radius: 2em;
+            background: #e8e8e8;
+            width: fit-content;
+        }
+
+        .tagsMode.active {
+            background: #b7d7ff;
+        }
+
+        #films {
+            margin-top: 2em;
+        }
+
+        .film {
+            margin: 2em 0;
+        }
+
+        .film h3 a {
+            color: gray;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="tags" class="tags">
+        <label id="tagsModeLabel" class="tagsMode active"><input id="tagsMode" onclick="toggleTagsModeClick(this)"
+                type="checkbox" checked="checked">Мультивыбор</label>
+
+        {{range $key, $value := .Tags}}
+
+        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">{{$value}}</div>
+
+        {{end}}
+
+    </div>
+
+    <div id="films"></div>
+
+    <script>
+        /**
+         * @param {HTMLElement} tagEl
+         */
+        function disableTagEl(tagEl) {
+            tagEl.dataset.isActive = '0';
+            tagEl.classList.remove('active');
+        }
+
+        /**
+         * @param {HTMLElement} tagEl
+         */
+        function enableTagEl(tagEl) {
+            tagEl.dataset.isActive = '1';
+            tagEl.classList.add('active');
+        }
+
+        /**
+         * @param {HTMLElement} el
+         */
+        function toggleTagsModeClick(el) {
+            if (el.checked) {
+                tagsModeLabelEl.classList.add('active');
+            } else {
+                tagsModeLabelEl.classList.remove('active');
+            }
+        }
+
+        /**
+         * @param {HTMLElement} selectedTagEl
+         * @returns {string[]}
+         */
+        function toggleTags(selectedTagEl) {
+            const multiTagsMode = tagsModeCheckboxEl.checked;
+            const selectedTags = [];
+
+            for (const tagEl of tagsContainerEl.querySelectorAll('[data-is-active="1"]')) {
+                if (tagEl === selectedTagEl) {
+                    selectedTags.push(tagEl.dataset.tagId);
+                    continue;
+                }
+
+                if (multiTagsMode) {
+                    selectedTags.push(tagEl.dataset.tagId);
+                } else {
+                    disableTagEl(tagEl);
+                }
+            }
+
+            return selectedTags;
+        }
+
+        /**
+         * @param {string[]} tagIds
+         */
+        function loadFilmsByTags(tagIds) {
+            if (globalController) {
+                globalController.abort();
+            }
+            globalController = new AbortController();
+
+            return fetch(`/films?tag=${tagIds}`, {
+                signal: globalController.signal,
+            })
+                .then(r => r.text())
+                .catch(function (e) {
+                    console.error('fetch films', e);
+                });
+        }
+
+        function renderFilms(html) {
+            filmsContainerEl.innerHTML = html;
+        }
+
+        /**
+         * @param {HTMLElement} el
+         * @param {string} tag
+         */
+        function loadFilmsClick(el, tag) {
+            if (el.dataset.isActive === '1') {
+                disableTagEl(el);
+            } else {
+                enableTagEl(el);
+            }
+
+            const selectedTags = toggleTags(el);
+            console.log('selectedTags', selectedTags);
+
+            const selectedTagsQuery = encodeURIComponent(selectedTags.join(','));
+            window.history.replaceState({}, '', `${window.location.pathname}?tags=${selectedTagsQuery}`)
+
+            if (selectedTags.length === 0) {
+                filmsContainerEl.innerHTML = '';
+                return;
+            }
+
+            filmsContainerEl.innerHTML = 'Загрузка...';
+            loadFilmsByTags(selectedTagsQuery)
+                .then(html => renderFilms(html));
+        }
+
+        const tagsContainerEl = document.getElementById('tags');
+        const filmsContainerEl = document.getElementById('films');
+        const tagsModeLabelEl = document.getElementById('tagsModeLabel');
+        const tagsModeCheckboxEl = document.getElementById('tagsMode');
+
+        const searchParams = new URLSearchParams(document.location.search);
+        const tagsQuery = searchParams.get('tags');
+        const tagsFromUrlMap = {};
+
+        // @type {AbortController}
+        let globalController = new AbortController();
+
+        if (tagsQuery) {
+            tagsQuery.split(',').forEach(tag => {
+                tagsFromUrlMap[tag] = true;
+            })
+            tagsModeCheckboxEl.checked = true;
+        }
+
+        // reset state
+        if (tagsModeCheckboxEl.checked) {
+            tagsModeLabelEl.classList.add('active');
+        } else {
+            tagsModeLabelEl.classList.remove('active');
+        }
+
+        // reset/change state
+        const selectedTags = [];
+        for (const tagEl of tagsContainerEl.getElementsByClassName('tag')) {
+            const tagId = tagEl.dataset.tagId;
+            if (tagsFromUrlMap[tagId]) {
+                enableTagEl(tagEl);
+                selectedTags.push(tagId);
+            } else {
+                disableTagEl(tagEl);
+            }
+        }
+
+        if (selectedTags.length > 0) {
+            loadFilmsByTags(selectedTags)
+                .then(html => renderFilms(html));
+        }
+    </script>
+
+</body>
+
+</html>
+
+{{end}}

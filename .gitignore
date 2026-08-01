@@ -1,0 +1,6 @@
+llm-reviews/start-local.sh
+llm-reviews/start-groq.sh
+llm-reviews/logs/*
+reviews/*
+
+temp/*.*
