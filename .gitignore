@@ -8,7 +8,7 @@ llm-reviews/get_films.sh
 llm-reviews/logs/*
 
 # output dir
-reviews/*
+reviews
 !reviews/.keep
 
 # other files
