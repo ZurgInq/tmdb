@@ -17,15 +17,15 @@ for filmdId in $filmIds; do
         continue
     fi
 
-    # curl -sS \
-    #     -X GET \
-    #     "https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmdId}" \
-    #     -H "accept: application/json" \
-    #     -H "X-API-KEY: ${API_KEY}" \
-    #     -o "$outputFile"
+    curl -sS \
+        -X GET \
+        "https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmdId}" \
+        -H "accept: application/json" \
+        -H "X-API-KEY: ${API_KEY}" \
+        -o "$outputFile"
 
-    # echo "Сохранено: $outputFile"
-    # sleep 0.1
+    echo "Сохранено: $outputFile"
+    sleep 0.1
 done
 
 echo "Готово."

@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"fmt"
 	"llm-reviews/api"
 	"log/slog"
 	"strings"
@@ -16,7 +15,7 @@ const (
 
 type processor struct {
 	client *api.Client
-	logger *slog.Logger
+	Logger *slog.Logger
 }
 
 func NewProcessor(
@@ -25,7 +24,7 @@ func NewProcessor(
 ) *processor {
 	return &processor{
 		client: client,
-		logger: logger,
+		Logger: logger,
 	}
 }
 
@@ -33,9 +32,10 @@ func (p *processor) ProcessReview(
 	startMessage string,
 	emotionsMapping string,
 	content string,
-	id int64,
+	filmId string,
+	reviewId int64,
 ) (string, error) {
-	logger := p.logger.With("review_id", id)
+	logger := p.Logger.With("filmId", filmId, "review_id", reviewId)
 	logger.Info("Start processing review")
 
 	contentLen := len(content)
@@ -52,21 +52,21 @@ func (p *processor) ProcessReview(
 
 	logger.Info("Response from first instruct", "result", result)
 	if result == "" {
-		fmt.Println("empty response, skip")
+		logger.Info("Empty response, skip")
 		return "", nil
 	}
 
-	logger.Info("Send second instruct...")
-	result, err = p.client.SendInstruct(emotionsMapping + result)
-	if err != nil {
-		return "", err
-	}
+	// logger.Info("Send second instruct...")
+	// result, err = p.client.SendInstruct(emotionsMapping + result)
+	// if err != nil {
+	// 	return "", err
+	// }
 
-	logger.Info("Response from second instruct", "result", result)
-	if result == "" {
-		fmt.Println("empty response, skip")
-		return "", nil
-	}
+	// logger.Info("Response from second instruct", "result", result)
+	// if result == "" {
+	// 	fmt.Println("empty response, skip")
+	// 	return "", nil
+	// }
 
 	return result, err
 }

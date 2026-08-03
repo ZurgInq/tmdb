@@ -90,6 +90,14 @@ func main() {
 
 	client.ChatRequestModifier = func(cr *api.ChatRequest) any {
 		cr.Mode = "instruct"
+
+		cr.Temperature = 1.0
+		cr.TopP = 0.95
+		cr.TopK = 20
+		cr.MinP = 0.0
+		cr.PresencePenalty = 1.5
+		cr.RepetitionPenalty = 1.0
+
 		return cr
 	}
 
@@ -110,7 +118,7 @@ func main() {
 		files,
 		outputDir,
 		func(filmID string, content string, id int64) (string, error) {
-			return processor.ProcessReview(string(startMessage), string(emotionsMapping), content, id)
+			return processor.ProcessReview(string(startMessage), string(emotionsMapping), content, filmID, id)
 		},
 		MaxReviews,
 		MaxFilms,

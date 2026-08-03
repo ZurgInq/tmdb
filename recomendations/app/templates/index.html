@@ -11,6 +11,10 @@
     <title>Фильмы</title>
 
     <style>
+        html {
+            scrollbar-gutter: stable;
+        }
+
         body {
             font-family: sans-serif;
             margin: 2em;
@@ -76,9 +80,11 @@
         <label id="tagsModeLabel" class="tagsMode active"><input id="tagsMode" onclick="toggleTagsModeClick(this)"
                 type="checkbox" checked="checked">Мультивыбор</label>
 
-        {{range $key, $value := .Tags}}
+        {{$tagToFilmIds := .TagToFilmIds}}
+        {{range $key, $tag := .Tags}}
 
-        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">{{$value}}</div>
+        {{$filmIds := index $tagToFilmIds $key}}
+        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">{{$tag.Name}} ({{len $filmIds}})</div>
 
         {{end}}
 

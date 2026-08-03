@@ -1,6 +1,15 @@
+# shortcuts
 llm-reviews/start-local.sh
 llm-reviews/start-groq.sh
-llm-reviews/logs/*
-reviews/*
+llm-reviews/get_reviews.sh
+llm-reviews/get_films.sh
 
+# logs
+llm-reviews/logs/*
+
+# output dir
+reviews/*
+!reviews/.keep
+
+# other files
 temp/*.*

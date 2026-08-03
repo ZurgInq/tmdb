@@ -13,10 +13,20 @@ import (
 type ChatRequest struct {
 	Messages []Message `json:"messages"`
 
-	Model          string          `json:"model"`
-	ResponseFormat json.RawMessage `json:"response_format"`
-	Stream         bool            `json:"stream"`
-	Mode           string          `json:"mode,omitempty"`
+	Model             string          `json:"model"`
+	ResponseFormat    json.RawMessage `json:"response_format"`
+	Stream            bool            `json:"stream"`
+	Mode              string          `json:"mode,omitempty"`
+	Temperature       float32         `json:"temperature,omitempty"`
+	TopK              int             `json:"top_k,omitempty"`
+	TopP              float32         `json:"top_p,omitempty"`
+	MinP              float32         `json:"min_p,omitempty"`
+	PresencePenalty   float32         `json:"presence_penalty,omitempty"`
+	RepetitionPenalty float32         `json:"repetition_penalty,omitempty"`
+
+	// Reasoning Format
+	ReasoningFormat  string `json:"reasoning_format,omitempty"` // parsed, raw, hidden
+	IncludeReasoning bool   `json:"include_reasoning,omitempty"`
 }
 
 type Message struct {
@@ -134,7 +144,8 @@ func (client *Client) SendInstruct(content string) (string, error) {
 				Content: content,
 			},
 		},
-		Stream: false,
+		Stream:           false,
+		IncludeReasoning: false,
 	})
 
 	if err != nil {

@@ -17,15 +17,15 @@ for filmId in $filmIds; do
 
     echo "Получение отзывов для фильма $filmId..."
 
-    # curl -sS \
-    #     -X GET \
-    #     "https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}/reviews?page=1&order=USER_POSITIVE_RATING_DESC" \
-    #     -H "accept: application/json" \
-    #     -H "X-API-KEY: ${API_KEY}" \
-    #     -o "$outputFile"
+    curl -sS \
+        -X GET \
+        "https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}/reviews?page=1&order=USER_POSITIVE_RATING_DESC" \
+        -H "accept: application/json" \
+        -H "X-API-KEY: ${API_KEY}" \
+        -o "$outputFile"
 
-    # echo "Сохранено: $outputFile"
-    # sleep 0.1
+    echo "Сохранено: $outputFile"
+    sleep 0.1
 done
 
 echo "Готово."

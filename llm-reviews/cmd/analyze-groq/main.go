@@ -153,7 +153,7 @@ func main() {
 		files,
 		outputDir,
 		func(filmID string, content string, id int64) (string, error) {
-			return processor.ProcessReview(string(startMessage), string(emotionsMapping), content, id)
+			return processor.ProcessReview(string(startMessage), string(emotionsMapping), content, filmID, id)
 		},
 		MaxReviews,
 		MaxFilms,

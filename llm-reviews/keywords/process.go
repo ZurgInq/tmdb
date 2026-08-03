@@ -2,55 +2,23 @@ package keywords
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
+	"os"
 	"strings"
 )
 
-var emotionsList = []string{
-	"задумчивость",
-	"переосмысление жизни",
-	"чувство потери (после окончания любимого сериала)",
-	"чувство потери",
-	"эмоциональная привязанность к персонажам",
-	"вдохновение на изменения в жизни",
-	"желание творить",
-	"удивление",
-	"катарсис",
-	"незавершённость",
-	"фрустрация",
-	"надежда",
-	"уют",
-	"веселье",
-	"грусть",
-	"тревога",
-	"неловкость",
-	"интрига",
-	"сопереживание",
-	"опустошение",
-	"безысходность",
-	"беспомощность",
-	"одиночество",
-}
-
-func GetEmotionsWords() []string {
-	return emotionsList
-}
-
-func GetEmotionsWordsAsMap() map[string]bool {
-	result := make(map[string]bool)
-	for _, v := range emotionsList {
-		result[v] = true
-	}
-
-	return result
-}
-
-func GetResultFromTxt(txtFile io.Reader, kinopoiskId int64) (Result, error) {
+func GetResultFromTxt(
+	synonyms map[string][]string,
+	txtFile io.Reader,
+	kinopoiskId int64,
+) (Result, error) {
 	counter := make(map[string]int)
 
 	scanner := bufio.NewScanner(txtFile)
 
-	emotionsWordsMap := GetEmotionsWordsAsMap()
+	synonymsMatch := &mapSynonyms{}
+	synonymsMatch.compileDict(synonyms)
 
 	inKeywords := false
 	for scanner.Scan() {
@@ -77,8 +45,8 @@ func GetResultFromTxt(txtFile io.Reader, kinopoiskId int64) (Result, error) {
 				continue
 			}
 
-			if !emotionsWordsMap[word] {
-				continue
+			if found, ok := synonymsMatch.Get(word); ok {
+				word = found
 			}
 
 			counter[word]++
@@ -111,6 +79,44 @@ func GetResultFromTxt(txtFile io.Reader, kinopoiskId int64) (Result, error) {
 			Count:   count,
 			Weight:  float64(count) / float64(maxCount),
 		})
+	}
+
+	return result, nil
+}
+
+// calc stats
+func GetStats(files []string, minCount int, maxCount int) (map[string]int, error) {
+	type FilmData struct {
+		Keywords []Keyword `json:"keywords"`
+	}
+
+	counts := make(map[string]int)
+
+	for _, fileName := range files {
+		data, err := os.ReadFile(fileName)
+		if err != nil {
+			return nil, err
+		}
+
+		var filmData FilmData
+		if err := json.Unmarshal(data, &filmData); err != nil {
+			return nil, err
+		}
+
+		for _, kw := range filmData.Keywords {
+			if kw.Emotion == "" {
+				continue
+			}
+			counts[kw.Emotion]++
+		}
+	}
+
+	result := make(map[string]int, 0)
+	for emotion, count := range counts {
+		if count > minCount &&
+			count < maxCount {
+			result[emotion] = count
+		}
 	}
 
 	return result, nil
