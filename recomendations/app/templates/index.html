@@ -93,6 +93,7 @@
     <div id="films"></div>
 
     <script>
+        const apiHost = "{{.ApiHost}}";
         /**
          * @param {HTMLElement} tagEl
          */
@@ -153,7 +154,7 @@
             }
             globalController = new AbortController();
 
-            return fetch(`/films?tag=${tagIds}`, {
+            return fetch(`${apiHost}/films?tag=${tagIds}`, {
                 signal: globalController.signal,
             })
                 .then(r => r.text())

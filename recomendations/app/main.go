@@ -1,27 +1,24 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
-	"strings"
-
-	"github.com/labstack/echo/v5"
-	"github.com/labstack/echo/v5/middleware"
 
 	getfilms "app/internal/actions/get_films"
+	"app/internal/routes"
 	"app/internal/storage"
 )
 
 const (
+	// tags settings
 	minCountForTags    = 2
 	minWeightForTags   = 0.5
 	maxShowTagsForFilm = 5
-	maxFilmsForShow    = 20
 	minTagsPerFilm     = 5
+	//
+	maxFilmsForShow = 20
 )
 
 type Template struct {
@@ -39,13 +36,18 @@ func main() {
 		filmsDir = "../../reviews/kinopoisk/films"
 	}
 
+	renderStatic := os.Getenv("RENDER_STATIC")
+	apiHost := os.Getenv("API_HOST")
+
 	serverPort := 8080
-	serverPortEnv := os.Getenv("SERVER_PORT")
-	if serverPortEnv != "" {
-		var err error
-		serverPort, err = strconv.Atoi(serverPortEnv)
-		if err != nil {
-			log.Fatal("Invalid SERVER_PORT", err)
+	if renderStatic == "" {
+		serverPortEnv := os.Getenv("SERVER_PORT")
+		if serverPortEnv != "" {
+			var err error
+			serverPort, err = strconv.Atoi(serverPortEnv)
+			if err != nil {
+				log.Fatal("Invalid SERVER_PORT", err)
+			}
 		}
 	}
 
@@ -61,49 +63,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	e := echo.New()
-
-	e.Use(middleware.Recover())
-
-	e.Renderer = &echo.TemplateRenderer{
-		Template: template.Must(template.ParseGlob("templates/*.html")),
-	}
-
+	templates := template.Must(template.ParseGlob("templates/*.html"))
 	actions := getfilms.New(db, maxFilmsForShow)
 
-	e.GET("/", func(c *echo.Context) error {
-		err := c.Render(http.StatusOK, "index.html", map[string]any{
-			"Tags":         db.EnabledTags,
-			"TagToFilmIds": db.TagToFilmIds,
-		})
-		if err != nil {
-			log.Println(err)
-		}
+	r := routes.New(templates, db, apiHost)
 
-		return err
-	})
+	if renderStatic != "" {
+		err = r.RenderIndex(renderStatic, actions)
+	} else {
+		err = r.Start(serverPort, actions)
+	}
 
-	e.GET("/films", func(c *echo.Context) error {
-		tagParam := strings.Split(c.QueryParam("tag"), ",")
-
-		result, err := actions.Do(tagParam)
-		if err != nil {
-			log.Println(err)
-		}
-
-		if err := c.Render(
-			http.StatusOK,
-			"films.html",
-			result,
-		); err != nil {
-			log.Println(err)
-		}
-
-		return err
-	})
-
-	err = e.Start(":" + fmt.Sprintf("%d", serverPort))
 	if err != nil {
-		e.Logger.Error("start error:" + err.Error())
+		log.Fatal(err)
 	}
 }

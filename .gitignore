@@ -11,5 +11,8 @@ llm-reviews/logs/*
 reviews
 !reviews/.keep
 
+# app
+recomendations/static/*
+
 # other files
 temp/*.*
