@@ -3,6 +3,7 @@ package storage
 import (
 	"cmp"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ import (
 
 type Storage struct {
 	Tags  map[string]*models.Tag // TagId => Tag
-	Films map[int64]models.Film  // FilmId => Film
+	Films map[int64]*models.Film // FilmId => Film
 	// index
 	EnabledTags  map[string]*models.Tag
 	TagsByFilm   map[int64][]*models.Tag // filmId => Tag
@@ -35,13 +36,16 @@ func Load(
 	tagsDir string,
 	minCountForTags int,
 	minWeightForTags float64,
-	maxShowTagsForFilm int,
+	maxTagsPerFilm int,
 	minTagsPerFilm int,
 ) (*Storage, error) {
 	log.Println("Load films from ", filmsDir)
 	filmFiles, err := filepath.Glob(filepath.Join(filmsDir, "*.json"))
+	if err != nil {
+		return nil, fmt.Errorf("get file list from %s:%w", filmsDir, err)
+	}
 
-	films := make(map[int64]models.Film)
+	films := make(map[int64]*models.Film)
 
 	for _, file := range filmFiles {
 		data, err := os.ReadFile(file)
@@ -54,7 +58,7 @@ func Load(
 		if err := json.Unmarshal(data, &film); err != nil {
 			return nil, err
 		}
-		films[film.KinopoiskId] = film
+		films[film.KinopoiskId] = &film
 	}
 
 	log.Println("Films count ", len(films))
@@ -105,8 +109,8 @@ func Load(
 			return cmp.Compare(j.Count, i.Count)
 		})
 
-		if len(filtered) > maxShowTagsForFilm {
-			// filtered = filtered[:maxShowTagsForFilm]
+		if len(filtered) > maxTagsPerFilm {
+			filtered = filtered[:maxTagsPerFilm]
 		}
 
 		for _, kw := range filtered {

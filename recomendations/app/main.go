@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 
 	getfilms "app/internal/actions/get_films"
@@ -12,17 +13,19 @@ import (
 )
 
 const (
-	// tags settings
-	minCountForTags    = 2
-	minWeightForTags   = 0.5
-	maxShowTagsForFilm = 5
-	minTagsPerFilm     = 5
+	// load tags settings
+	minCountForTags  = 2
+	minWeightForTags = 0.5
+	maxTagsPerFilm   = 20
+	minTagsPerFilm   = 5
 	//
-	maxFilmsForShow = 20
+	maxFilmsForShow = 250
 )
 
-type Template struct {
-	templates *template.Template
+func fatalIfErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -56,25 +59,43 @@ func main() {
 		tagsDir,
 		minCountForTags,
 		minWeightForTags,
-		maxShowTagsForFilm,
+		maxTagsPerFilm,
 		minTagsPerFilm,
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
+	fatalIfErr(err)
 
-	templates := template.Must(template.ParseGlob("templates/*.html"))
-	actions := getfilms.New(db, maxFilmsForShow)
+	templates := template.Must(template.ParseGlob("templates/index/*"))
+	templates = template.Must(templates.ParseGlob("templates/*.html"))
+
+	log.Println("Templates: ", slices.Collect(func(yield func(string) bool) {
+		for _, t := range templates.Templates() {
+			yield(t.Name())
+		}
+	}))
+
+	getFilmAction := getfilms.New(db, maxFilmsForShow)
 
 	r := routes.New(templates, db, apiHost)
 
 	if renderStatic != "" {
-		err = r.RenderIndex(renderStatic, actions)
-	} else {
-		err = r.Start(serverPort, actions)
+		if renderStatic == "1" {
+			renderStatic = "../static"
+		}
+
+		fileInfo, err := os.Stat(renderStatic)
+		fatalIfErr(err)
+
+		if !fileInfo.IsDir() {
+			log.Fatalf("%s is not dir", fileInfo.Name())
+		}
+
+		fatalIfErr(r.RenderIndex(renderStatic))
+		fatalIfErr(r.RenderIndexDemo(renderStatic, getFilmAction))
+
+		log.Printf("Files saved to dir: %s\n", renderStatic)
+
+		return
 	}
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	fatalIfErr(r.Start(serverPort, getFilmAction))
 }

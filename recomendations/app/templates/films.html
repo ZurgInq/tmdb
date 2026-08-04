@@ -4,9 +4,9 @@
 
 {{range .Films}}
 
-<hr>
-
 <div class="film">
+
+    <hr>
 
     <p><a target="_blank" href="{{.WebUrl}}"><h3>{{.NameRu}} | {{.Year}}</h3></a></p>
     <p><a target="_blank" href="https://rutracker.org/forum/tracker.php?nm={{.NameRu}} {{.Year}}">rutracker.org</a></p>
@@ -14,7 +14,7 @@
     <div class="tags">
         {{$filmEmotions := index $allEmotions .KinopoiskId}}
         {{range $filmEmotions}}
-        <div class="filmTag">{{.Name}}</div>
+        <div data-tag-id="{{.Id}}" class="filmTag">{{.Name}}</div>
         {{end}}
     </div>
 

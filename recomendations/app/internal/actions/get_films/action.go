@@ -11,7 +11,7 @@ type action struct {
 }
 
 type Result struct {
-	Films    []models.Film
+	Films    []*models.Film
 	Emotions map[int64][]*models.Tag
 }
 
@@ -49,7 +49,7 @@ func (act *action) Do(filterTags []string) (Result, error) {
 		}
 	}
 
-	films := make([]models.Film, 0)
+	films := make([]*models.Film, 0)
 	filmsSet := make(map[int64]struct{})
 
 	for _, tag := range tagIds {

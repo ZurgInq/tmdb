@@ -10,67 +10,7 @@
 
     <title>Фильмы</title>
 
-    <style>
-        html {
-            scrollbar-gutter: stable;
-        }
-
-        body {
-            font-family: sans-serif;
-            margin: 2em;
-        }
-
-        .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5em;
-        }
-
-        .filmTag {
-            padding: 0.5em 1em;
-            border-radius: 2em;
-            background: #e8e8e8;
-            width: fit-content;
-        }
-
-        .tag {
-            padding: 0.5em 1em;
-            border-radius: 2em;
-            background: #e8e8e8;
-            cursor: pointer;
-        }
-
-        .tag.active {
-            background: #b7d7ff;
-        }
-
-        .tag:hover {
-            background: #b7d7ff;
-        }
-
-        .tagsMode {
-            padding: 0.5em 1em;
-            border-radius: 2em;
-            background: #e8e8e8;
-            width: fit-content;
-        }
-
-        .tagsMode.active {
-            background: #b7d7ff;
-        }
-
-        #films {
-            margin-top: 2em;
-        }
-
-        .film {
-            margin: 2em 0;
-        }
-
-        .film h3 a {
-            color: gray;
-        }
-    </style>
+    {{template "index/style.html"}}
 
 </head>
 
@@ -84,7 +24,8 @@
         {{range $key, $tag := .Tags}}
 
         {{$filmIds := index $tagToFilmIds $key}}
-        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">{{$tag.Name}} ({{len $filmIds}})</div>
+        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">{{$tag.Name}} ({{len
+            $filmIds}})</div>
 
         {{end}}
 
@@ -160,6 +101,7 @@
                 .then(r => r.text())
                 .catch(function (e) {
                     console.error('fetch films', e);
+                    return 'server error'
                 });
         }
 
@@ -185,7 +127,7 @@
             window.history.replaceState({}, '', `${window.location.pathname}?tags=${selectedTagsQuery}`)
 
             if (selectedTags.length === 0) {
-                filmsContainerEl.innerHTML = '';
+                renderFilms('');
                 return;
             }
 

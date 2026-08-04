@@ -1,0 +1,194 @@
+{{define "index_demo.html"}}
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Фильмы</title>
+
+    {{template "index/style.html"}}
+
+</head>
+
+<body>
+
+    <div id="tags" class="tags">
+        <label id="tagsModeLabel" class="tagsMode active"><input id="tagsMode" onclick="toggleTagsModeClick(this)"
+                type="checkbox" checked="checked">Мультивыбор</label>
+
+        {{$tagToFilmIds := .TagToFilmIds}}
+        {{range $key, $tag := .Tags}}
+
+        {{$filmIds := index $tagToFilmIds $key}}
+        <div class="tag" data-tag-id="{{$key}}" onclick="filterFilmsByTagsClick(this, '{{$key}}')">{{$tag.Name}} ({{len
+            $filmIds}})
+        </div>
+
+        {{end}}
+
+    </div>
+    <div><h4>Найдено: <span id="total-counter"></spans></h4></div>
+
+    <div id="films">
+        {{template "films.html" .FilmsData}}
+    </div>
+
+    <script>
+        const htmlEls = {
+            tagsContainer: document.getElementById('tags'),
+            filmsContainer: document.getElementById('films'),
+            tagsModeLabel: document.getElementById('films'),
+            tagsModeCheckbox: document.getElementById('tagsMode'),
+            totalCounter: document.getElementById('total-counter'),
+        }
+
+        /**
+         * @param {Array} arr
+         * @param {Array} target
+         */
+        function includesAll(arr, target) {
+            return target.every(v => arr.includes(v));
+        };
+
+        /**
+         * @param {HTMLElement} tagEl
+         */
+        function disableTagEl(tagEl) {
+            tagEl.dataset.isActive = '0';
+            tagEl.classList.remove('active');
+        }
+
+        /**
+         * @param {HTMLElement} tagEl
+         */
+        function enableTagEl(tagEl) {
+            tagEl.dataset.isActive = '1';
+            tagEl.classList.add('active');
+        }
+
+        /**
+         * @param {HTMLElement} el
+         */
+        function toggleTagsModeClick(el) {
+            if (el.checked) {
+                htmlEls.tagsModeLabel.classList.add('active');
+            } else {
+                htmlEls.tagsModeLabel.classList.remove('active');
+            }
+        }
+
+        /**
+         * @param {HTMLElement} selectedTagEl
+         * @returns {string[]}
+         */
+        function toggleTags(selectedTagEl) {
+            const multiTagsMode = htmlEls.tagsModeCheckbox.checked;
+            const selectedTags = [];
+
+            for (const tagEl of htmlEls.tagsContainer.querySelectorAll('[data-is-active="1"]')) {
+                if (tagEl === selectedTagEl) {
+                    selectedTags.push(tagEl.dataset.tagId);
+                    continue;
+                }
+
+                if (multiTagsMode) {
+                    selectedTags.push(tagEl.dataset.tagId);
+                } else {
+                    disableTagEl(tagEl);
+                }
+            }
+
+            return selectedTags;
+        }
+
+        /**
+         * @param {string[]} tagIds
+         */
+        function filterFilmsByTags(tagIds) {
+            const filmEls = document.querySelectorAll("#films .film");
+            let showCounter = 0;
+
+            for (const filmEl of filmEls) {
+                const filmTags = [];
+                for (const tagEl of filmEl.querySelectorAll("[data-tag-id]")) {
+                    const tagId = tagEl.dataset.tagId;
+                    if (tagId) {
+                        filmTags.push(tagId);
+                    }
+                }
+
+                const show = includesAll(filmTags, tagIds);
+                filmEl.hidden = !show;
+
+                if (show) {
+                    showCounter++;
+                }
+            }
+            htmlEls.totalCounter.textContent = `${showCounter}`;
+        }
+
+        /**
+         * @param {HTMLElement} el
+         * @param {string} tag
+         */
+        function filterFilmsByTagsClick(el, tag) {
+            if (el.dataset.isActive === '1') {
+                disableTagEl(el);
+            } else {
+                enableTagEl(el);
+            }
+
+            const selectedTags = toggleTags(el);
+            console.log('selectedTags', selectedTags);
+
+            filterFilmsByTags(selectedTags);
+        }
+
+        function initPage() {
+            const searchParams = new URLSearchParams(document.location.search);
+            const tagsQuery = searchParams.get('tags');
+            const tagsFromUrlMap = {};
+
+            if (tagsQuery) {
+                tagsQuery.split(',').forEach(tag => {
+                    tagsFromUrlMap[tag] = true;
+                })
+                htmlEls.tagsModeCheckbox.checked = true;
+            }
+
+            // reset state
+            if (htmlEls.tagsModeCheckbox.checked) {
+                htmlEls.tagsModeLabel.classList.add('active');
+            } else {
+                htmlEls.tagsModeLabel.classList.remove('active');
+            }
+
+            // reset/change state
+            const selectedTags = [];
+            for (const tagEl of htmlEls.tagsContainer.getElementsByClassName('tag')) {
+                const tagId = tagEl.dataset.tagId;
+                if (tagsFromUrlMap[tagId]) {
+                    enableTagEl(tagEl);
+                    selectedTags.push(tagId);
+                } else {
+                    disableTagEl(tagEl);
+                }
+            }
+
+            if (selectedTags.length > 0) {
+                filterFilmsByTags(selectedTags);
+            }
+        }
+
+        initPage();
+    </script>
+
+</body>
+
+</html>
+
+{{end}}

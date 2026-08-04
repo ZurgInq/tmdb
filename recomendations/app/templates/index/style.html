@@ -1,0 +1,63 @@
+{{define "index/style.html"}}
+<style>
+    html {
+        scrollbar-gutter: stable;
+    }
+
+    body {
+        font-family: sans-serif;
+        margin: 2em;
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+    }
+
+    .filmTag {
+        padding: 0.5em 1em;
+        border-radius: 2em;
+        background: #e8e8e8;
+        width: fit-content;
+    }
+
+    .tag {
+        padding: 0.5em 1em;
+        border-radius: 2em;
+        background: #e8e8e8;
+        cursor: pointer;
+    }
+
+    .tag.active {
+        background: #b7d7ff;
+    }
+
+    .tag:hover {
+        background: #b7d7ff;
+    }
+
+    .tagsMode {
+        padding: 0.5em 1em;
+        border-radius: 2em;
+        background: #e8e8e8;
+        width: fit-content;
+    }
+
+    .tagsMode.active {
+        background: #b7d7ff;
+    }
+
+    #films {
+        margin-top: 2em;
+    }
+
+    .film {
+        margin: 2em 0;
+    }
+
+    .film h3 a {
+        color: gray;
+    }
+</style>
+{{end}}
