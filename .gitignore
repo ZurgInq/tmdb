@@ -13,6 +13,8 @@ reviews
 
 # app
 recomendations/static/*
+recomendations/app/bin/*
+!recomendations/app/bin/.keep
 
 # other files
 temp/*.*
