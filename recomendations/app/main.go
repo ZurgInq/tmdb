@@ -15,7 +15,7 @@ import (
 const (
 	// load tags settings
 	minCountForTags  = 2
-	minWeightForTags = 0.5
+	minWeightForTags = 0.4
 	maxTagsPerFilm   = 20
 	minTagsPerFilm   = 5
 	//
