@@ -10,7 +10,7 @@ run:
 demo:
 	RENDER_STATIC=1 go run main.go
 	mkdir -p ../../docs
-	cp ../static/index_demo.html ../../docs/
+	cp ../static/index_demo.html ../../docs/index.html
 
 check:
 	go fmt ./...
