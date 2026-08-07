@@ -1,8 +1,5 @@
 # shortcuts
-llm-reviews/start-local.sh
-llm-reviews/start-groq.sh
-llm-reviews/get_reviews.sh
-llm-reviews/get_films.sh
+llm-reviews/*.sh
 
 # logs
 llm-reviews/logs/*

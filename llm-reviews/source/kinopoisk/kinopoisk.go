@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,10 +19,26 @@ type ReviewResp struct {
 	Items []Item `json:"items"`
 }
 
+type ReviewType string
+
+const (
+	ReviewTypeNegative ReviewType = "NEGATIVE"
+	ReviewTypePositive ReviewType = "POSITIVE"
+	ReviewTypeNeutral  ReviewType = "NEUTRAL"
+)
+
+var (
+	ReviewTypeAll = []ReviewType{
+		ReviewTypePositive,
+		ReviewTypeNegative,
+		ReviewTypeNeutral,
+	}
+)
+
 type Item struct {
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	KinopoiskId int64  `json:"kinopoiskId"`
+	Type        ReviewType `json:"type"`
+	Description string     `json:"description"`
+	KinopoiskId int64      `json:"kinopoiskId"`
 }
 
 func extractIDs(filename string) ([]int64, error) {
@@ -141,15 +158,42 @@ func StartProcessing(
 		}
 
 		log.Printf("Начинается обработка рецензий для filmID=%s...\n", filmID)
+
+		countPositive := 0
+		countNegative := 0
+		countNeutral := 0
+
+		for _, item := range reviewResponse.Items {
+			switch item.Type {
+			case ReviewTypeNegative:
+				countNegative++
+			case ReviewTypePositive:
+				countPositive++
+			case ReviewTypeNeutral:
+				countNeutral++
+			}
+		}
+
 		for _, item := range reviewResponse.Items {
 			if processedReviews+skippedReviews >= maxReviews {
 				log.Printf("Достигнуто максимальное количество ревью (%d) на фильм ИД=%s\n", maxReviews, filmID)
 				break
 			}
 
-			if item.Type != "POSITIVE" {
+			if countPositive >= maxReviews &&
+				(item.Type == ReviewTypeNegative || item.Type == ReviewTypeNeutral) {
 				continue
 			}
+
+			if countPositive+countNeutral >= maxReviews && item.Type == ReviewTypeNegative {
+				continue
+			}
+
+			if !slices.Contains(ReviewTypeAll, item.Type) {
+				log.Printf("Неизвестный тип рецензии: %s", item.Type)
+				continue
+			}
+
 			if reviewsIdsInFile != nil {
 				if _, exists := reviewsIdsInFile[item.KinopoiskId]; exists {
 					skippedReviews++

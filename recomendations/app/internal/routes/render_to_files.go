@@ -11,42 +11,66 @@ import (
 	"app/internal/models"
 )
 
-func (r *routes) RenderIndex(
-	dirOutput string,
-) error {
+const tmplDemoIndex = "demo/index.html"
+
+type indexDemoPageParams struct {
+	Title string
+
+	Tags         map[string]*models.Tag
+	TagToFilmIds map[string][]int64
+	FilmsData    getfilms.Result
+	PageType     string
+}
+
+func (r *routes) RenderFilmsDemo(dirOutput string) error {
+	films := make([]*models.Film, 0, len(r.db.Films))
+
+	for _, f := range r.db.Films {
+		if f.Type == models.FilmTypeFilm {
+			films = append(films, f)
+		}
+	}
+
 	return renderToFile(
 		r.templates,
-		"index.html",
-		map[string]any{
-			"Tags":         r.db.EnabledTags,
-			"TagToFilmIds": r.db.TagToFilmIds,
-			"ApiHost":      r.apiHost,
+		tmplDemoIndex,
+		indexDemoPageParams{
+			Title:        "Фильмы",
+			PageType:     "Films",
+			Tags:         r.db.EnabledTags,
+			TagToFilmIds: r.db.TagToFilmIds,
+			FilmsData: getfilms.Result{
+				Films:    films,
+				Emotions: r.db.TagsByFilm,
+			},
 		},
 		filepath.Join(dirOutput, "index.html"),
 	)
 }
 
-func (r *routes) RenderIndexDemo(
-	dirOutput string,
-	getFilms GetFilmsAction,
-) error {
+func (r *routes) RenderSeriesDemo(dirOutput string) error {
 	films := make([]*models.Film, 0, len(r.db.Films))
 	for _, f := range r.db.Films {
-		films = append(films, f)
+		if f.Type == models.FilmTypeTvSeries ||
+			f.Type == models.FilmTypeMiniSeries {
+			films = append(films, f)
+		}
 	}
 
 	return renderToFile(
 		r.templates,
-		"index_demo.html",
-		map[string]any{
-			"Tags":         r.db.EnabledTags,
-			"TagToFilmIds": r.db.TagToFilmIds,
-			"FilmsData": getfilms.Result{
+		tmplDemoIndex,
+		indexDemoPageParams{
+			Title:        "Сериалы",
+			PageType:     "Series",
+			Tags:         r.db.EnabledTags,
+			TagToFilmIds: r.db.TagToFilmIds,
+			FilmsData: getfilms.Result{
 				Films:    films,
 				Emotions: r.db.TagsByFilm,
 			},
 		},
-		filepath.Join(dirOutput, "index_demo.html"),
+		filepath.Join(dirOutput, "series.html"),
 	)
 }
 

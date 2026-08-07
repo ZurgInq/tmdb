@@ -1,5 +1,6 @@
-{{define "index/style.html"}}
+{{define "partials/style.html"}}
 <style>
+    /* html */
     html {
         scrollbar-gutter: stable;
     }
@@ -9,17 +10,22 @@
         margin: 2em;
     }
 
+    /* nav */
+    nav.nav-top {
+        margin: 1em;
+    }
+
+    .nav-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* tags filter */
     .tags {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5em;
-    }
-
-    .filmTag {
-        padding: 0.5em 1em;
-        border-radius: 2em;
-        background: #e8e8e8;
-        width: fit-content;
     }
 
     .tag {
@@ -48,6 +54,7 @@
         background: #b7d7ff;
     }
 
+    /* films container */
     #films {
         margin-top: 2em;
     }
@@ -58,6 +65,13 @@
 
     .film h3 a {
         color: gray;
+    }
+
+    .filmTag {
+        padding: 0.5em 1em;
+        border-radius: 2em;
+        background: #e8e8e8;
+        width: fit-content;
     }
 </style>
 {{end}}

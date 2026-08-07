@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"app/internal/storage"
 	"fmt"
 	"html/template"
 	"log"
@@ -9,13 +8,21 @@ import (
 	"strings"
 
 	getfilms "app/internal/actions/get_films"
+	"app/internal/models"
+	"app/internal/storage"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
 
+const (
+	tmplIndex         = "index.html"
+	tmplPartialsFilms = "partials/films.html"
+)
+
 type GetFilmsAction interface {
-	Do(filterTags []string) (getfilms.Result, error)
+	// see app/internal/actions/get_films
+	Do(filterTags []string, filmTypes []models.FilmType) (getfilms.Result, error)
 }
 
 type routes struct {
@@ -36,6 +43,13 @@ func New(
 	}
 }
 
+func (r *routes) WithDB(db *storage.Storage) *routes {
+	cloned := r
+	cloned.db = db
+
+	return cloned
+}
+
 func (r *routes) Start(
 	serverPort int,
 	getFilms GetFilmsAction,
@@ -48,7 +62,7 @@ func (r *routes) Start(
 	}
 
 	e.GET("/", func(c *echo.Context) error {
-		err := c.Render(http.StatusOK, "index.html", map[string]any{
+		err := c.Render(http.StatusOK, tmplIndex, map[string]any{
 			"Tags":         r.db.EnabledTags,
 			"TagToFilmIds": r.db.TagToFilmIds,
 			"ApiHost":      r.apiHost,
@@ -63,14 +77,14 @@ func (r *routes) Start(
 	e.GET("/films", func(c *echo.Context) error {
 		tagParam := strings.Split(c.QueryParam("tag"), ",")
 
-		result, err := getFilms.Do(tagParam)
+		result, err := getFilms.Do(tagParam, nil)
 		if err != nil {
 			log.Println(err)
 		}
 
 		if err := c.Render(
 			http.StatusOK,
-			"films.html",
+			tmplPartialsFilms,
 			result,
 		); err != nil {
 			log.Println(err)

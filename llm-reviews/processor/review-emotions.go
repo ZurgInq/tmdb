@@ -4,6 +4,7 @@ import (
 	"llm-reviews/api"
 	"log/slog"
 	"strings"
+	"time"
 )
 
 // Лимиты на длину рецензий. Обрезаем длинные рецензии по параграфам
@@ -40,17 +41,19 @@ func (p *processor) ProcessReview(
 
 	contentLen := len(content)
 	if contentLen > maxTextLen {
-		logger.Info("Cropping the text", "maxTextLen", maxTextLen, "contentLen", len(content))
-		content = ShortenText(content)
+		short := ShortenText(content)
+		logger.Info("Cropping the text", "maxTextLen", maxTextLen, "contentLen", len(content), "shortLen", len(short))
+		content = short
 	}
 
+	tStart := time.Now()
 	logger.Info("Send first instruct...")
 	result, err := p.client.SendInstruct(startMessage + content)
 	if err != nil {
 		return "", err
 	}
 
-	logger.Info("Response from first instruct", "result", result)
+	logger.Info("Response from first instruct", "duration-sec", time.Since(tStart), "result", result)
 	if result == "" {
 		logger.Info("Empty response, skip")
 		return "", nil

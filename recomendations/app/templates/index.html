@@ -10,7 +10,7 @@
 
     <title>Фильмы</title>
 
-    {{template "index/style.html"}}
+    {{template "partials/style.html"}}
 
 </head>
 
@@ -24,8 +24,9 @@
         {{range $key, $tag := .Tags}}
 
         {{$filmIds := index $tagToFilmIds $key}}
-        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">{{$tag.Name}} ({{len
-            $filmIds}})</div>
+        <div class="tag" data-tag-id="{{$key}}" onclick="loadFilmsClick(this, '{{$key}}')">
+            {{$tag.Name}} ({{len $filmIds}})
+        </div>
 
         {{end}}
 

@@ -1,4 +1,4 @@
-{{define "index_demo.html"}}
+{{define "demo/index.html"}}
 
 <!DOCTYPE html>
 
@@ -7,14 +7,35 @@
 <head>
 
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <title>Фильмы</title>
+    <title>{{ .Title }}</title>
 
-    {{template "index/style.html"}}
+    {{template "partials/style.html"}}
 
 </head>
 
 <body>
+    {{if eq .PageType "Films"}}
+    <nav class="nav-top">
+        <ul class="nav-menu">
+            <li><a href="series.html">Смотреть ТОП 250 Сериалов</a></li>
+        </ul>
+    </nav>
+
+    <h1><i class="bi bi-film"></i> ТОП 250 Фильмов по версии Кинопоиска <i class="bi bi-film"></i></h1>
+    {{else}}{{if eq .PageType "Series"}}
+    <nav class="nav-top">
+        <ul class="nav-menu">
+            <li><a href="index.html">Смотреть ТОП 250 Фильмов</a></li>
+        </ul>
+    </nav>
+
+    <h1><i class="bi bi-film"></i> ТОП 250 Сериалов по версии Кинопоиска <i class="bi bi-film"></i></h1>
+    {{else}}
+    {{end}}{{end}}
+
+    <h2>Список по эмоциям</h2>
 
     <div id="tags" class="tags">
         <label id="tagsModeLabel" class="tagsMode active"><input id="tagsMode" onclick="toggleTagsModeClick(this)"
@@ -24,17 +45,21 @@
         {{range $key, $tag := .Tags}}
 
         {{$filmIds := index $tagToFilmIds $key}}
-        <div class="tag" data-tag-id="{{$key}}" onclick="filterFilmsByTagsClick(this, '{{$key}}')">{{$tag.Name}} ({{len
-            $filmIds}})
+        <div class="tag" data-tag-id="{{$key}}" onclick="filterFilmsByTagsClick(this, '{{$key}}')">
+            {{template "partials/tag-icons.html" .}}
+            {{$tag.Name}} ({{len $filmIds}})
         </div>
 
         {{end}}
 
     </div>
-    <div><h4>Найдено: <span id="total-counter"></spans></h4></div>
+    <div>
+        <h4>Найдено: <span id="total-counter"></spans>
+        </h4>
+    </div>
 
     <div id="films">
-        {{template "films.html" .FilmsData}}
+        {{template "partials/films.html" .FilmsData}}
     </div>
 
     <script>

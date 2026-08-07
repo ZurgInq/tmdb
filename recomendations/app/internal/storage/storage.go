@@ -31,40 +31,34 @@ func capitalizeFirst(s string) string {
 	return string(unicode.ToUpper(r)) + s[size:]
 }
 
-func Load(
-	filmsDir string,
-	tagsDir string,
-	minCountForTags int,
-	minWeightForTags float64,
-	maxTagsPerFilm int,
-	minTagsPerFilm int,
-) (*Storage, error) {
-	log.Println("Load films from ", filmsDir)
-	filmFiles, err := filepath.Glob(filepath.Join(filmsDir, "*.json"))
+type LoadParams struct {
+	FilmsDir string
+	TagsDir  string
+
+	FilmTypes []models.FilmType
+
+	MinCountForTags  int
+	MinWeightForTags float64
+	MaxTagsPerFilm   int
+	MinTagsPerFilm   int
+}
+
+func Load(params LoadParams) (*Storage, error) {
+	log.Println("Load films from ", params.FilmsDir)
+	filmFiles, err := filepath.Glob(filepath.Join(params.FilmsDir, "*.json"))
 	if err != nil {
-		return nil, fmt.Errorf("get file list from %s:%w", filmsDir, err)
+		return nil, fmt.Errorf("get file list from %s:%w", params.FilmsDir, err)
 	}
 
-	films := make(map[int64]*models.Film)
-
-	for _, file := range filmFiles {
-		data, err := os.ReadFile(file)
-		if err != nil {
-			return nil, err
-		}
-
-		var film models.Film
-
-		if err := json.Unmarshal(data, &film); err != nil {
-			return nil, err
-		}
-		films[film.KinopoiskId] = &film
+	films, err := loadFilms(filmFiles, params.FilmTypes)
+	if err != nil {
+		return nil, err
 	}
 
-	log.Println("Films count ", len(films))
+	log.Println("Films count", len(films))
 
-	log.Println("Load tags from ", tagsDir)
-	tagsFiles, err := filepath.Glob(filepath.Join(tagsDir, "*.json"))
+	log.Println("Load tags from ", params.TagsDir)
+	tagsFiles, err := filepath.Glob(filepath.Join(params.TagsDir, "*.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -81,44 +75,24 @@ func Load(
 			return nil, err
 		}
 
-		var review models.Review
+		var filmKW models.FilmKeywords
 
-		if err := json.Unmarshal(data, &review); err != nil {
+		if err := json.Unmarshal(data, &filmKW); err != nil {
 			return nil, err
 		}
 
-		if len(review.Keywords) == 0 {
+		if len(filmKW.Keywords) == 0 {
 			continue
 		}
 
-		filtered := slices.Collect(func(yield func(models.Keyword) bool) {
-			for _, kw := range review.Keywords {
-				if kw.Count < minCountForTags {
-					continue
-				}
+		kw := applyParamsToEmotionData(films, filmKW, params)
 
-				if kw.Weight < minWeightForTags {
-					continue
-				}
-
-				yield(kw)
-			}
-		})
-
-		slices.SortFunc(filtered, func(i, j models.Keyword) int {
-			return cmp.Compare(j.Count, i.Count)
-		})
-
-		if len(filtered) > maxTagsPerFilm {
-			filtered = filtered[:maxTagsPerFilm]
-		}
-
-		for _, kw := range filtered {
+		for _, kw := range kw {
 			uniqTags[kw.Emotion] = struct{}{}
 
 			tagToFilms[kw.Emotion] = append(
 				tagToFilms[kw.Emotion],
-				review.KinopoiskID,
+				filmKW.KinopoiskID,
 			)
 
 			tag := &models.Tag{
@@ -127,14 +101,14 @@ func Load(
 				Enabled: true,
 			}
 			tags[kw.Emotion] = tag
-			tagsByFilm[review.KinopoiskID] = append(tagsByFilm[review.KinopoiskID], tag)
+			tagsByFilm[filmKW.KinopoiskID] = append(tagsByFilm[filmKW.KinopoiskID], tag)
 		}
 	}
 
 	enabledTags := make(map[string]*models.Tag)
 	for t := range uniqTags {
 		enabled := true
-		if len(tagToFilms[t]) < minTagsPerFilm {
+		if len(tagToFilms[t]) < params.MinTagsPerFilm {
 			enabled = false
 		}
 
@@ -150,4 +124,62 @@ func Load(
 		Films:        films,
 		EnabledTags:  enabledTags,
 	}, nil
+}
+
+func applyParamsToEmotionData(
+	films map[int64]*models.Film,
+	review models.FilmKeywords,
+	params LoadParams,
+) []models.Keyword {
+	filtered := slices.Collect(func(yield func(models.Keyword) bool) {
+		for _, kw := range review.Keywords {
+			if kw.Count < params.MinCountForTags {
+				continue
+			}
+
+			if kw.Weight < params.MinWeightForTags {
+				continue
+			}
+
+			if _, ok := films[review.KinopoiskID]; !ok {
+				continue
+			}
+
+			yield(kw)
+		}
+	})
+
+	slices.SortFunc(filtered, func(i, j models.Keyword) int {
+		return cmp.Compare(j.Count, i.Count)
+	})
+
+	if len(filtered) > params.MaxTagsPerFilm {
+		filtered = filtered[:params.MaxTagsPerFilm]
+	}
+
+	return filtered
+}
+
+func loadFilms(filmFiles []string, filmTypes []models.FilmType) (map[int64]*models.Film, error) {
+	films := make(map[int64]*models.Film)
+
+	for _, file := range filmFiles {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+
+		var film models.Film
+
+		if err := json.Unmarshal(data, &film); err != nil {
+			return nil, err
+		}
+
+		if filmTypes == nil ||
+			slices.Contains(filmTypes, film.Type) {
+			films[film.KinopoiskId] = &film
+		}
+	}
+
+	return films, nil
 }

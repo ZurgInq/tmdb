@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,7 +15,7 @@ type ChatRequest struct {
 	Messages []Message `json:"messages"`
 
 	Model             string          `json:"model"`
-	ResponseFormat    json.RawMessage `json:"response_format"`
+	ResponseFormat    json.RawMessage `json:"response_format,omitempty"`
 	Stream            bool            `json:"stream"`
 	Mode              string          `json:"mode,omitempty"`
 	Temperature       float32         `json:"temperature,omitempty"`
@@ -25,8 +26,7 @@ type ChatRequest struct {
 	RepetitionPenalty float32         `json:"repetition_penalty,omitempty"`
 
 	// Reasoning Format
-	ReasoningFormat  string `json:"reasoning_format,omitempty"` // parsed, raw, hidden
-	IncludeReasoning bool   `json:"include_reasoning,omitempty"`
+	ReasoningFormat string `json:"reasoning_format,omitempty"` // parsed, raw, hidden
 }
 
 type Message struct {
@@ -92,7 +92,7 @@ func (c *Client) SendRequest(body []byte) (*ChatResponse, error) {
 			return &chatResp, nil
 		}
 
-		fmt.Println(string(respBody))
+		log.Println("error response: ", string(respBody))
 		// Rate limit
 		if resp.StatusCode == http.StatusTooManyRequests {
 			delay := backoff
@@ -144,8 +144,8 @@ func (client *Client) SendInstruct(content string) (string, error) {
 				Content: content,
 			},
 		},
-		Stream:           false,
-		IncludeReasoning: false,
+		Stream:          false,
+		ReasoningFormat: "parsed",
 	})
 
 	if err != nil {

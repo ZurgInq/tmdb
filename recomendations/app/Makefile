@@ -8,9 +8,10 @@ run:
 	go run main.go
 
 demo:
-	RENDER_STATIC=1 go run main.go
+	RENDER_DEMO=1 go run main.go
 	mkdir -p ../../docs
-	cp ../static/index_demo.html ../../docs/index.html
+	cp ../static/demo/index.html ../../docs/index.html
+	cp ../static/demo/series.html ../../docs/series.html
 
 check:
 	go fmt ./...

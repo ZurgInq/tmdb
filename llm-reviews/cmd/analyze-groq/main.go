@@ -130,6 +130,11 @@ func main() {
 
 	client.ChatRequestModifier = func(cr *api.ChatRequest) any {
 		cr.Model = choosenModel
+		if cr.Model == modelQwen_Qwen3_6_27b {
+			cr.ReasoningFormat = "parsed"
+		} else {
+			cr.ReasoningFormat = ""
+		}
 		return cr
 	}
 

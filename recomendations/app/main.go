@@ -4,10 +4,12 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 
 	getfilms "app/internal/actions/get_films"
+	"app/internal/models"
 	"app/internal/routes"
 	"app/internal/storage"
 )
@@ -22,12 +24,6 @@ const (
 	maxFilmsForShow = 250
 )
 
-func fatalIfErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
 	tagsDir := os.Getenv("EMOTIONS_DIR")
 	if tagsDir == "" {
@@ -39,11 +35,11 @@ func main() {
 		filmsDir = "../../reviews/kinopoisk/films"
 	}
 
-	renderStatic := os.Getenv("RENDER_STATIC")
+	renderDemo := os.Getenv("RENDER_DEMO")
 	apiHost := os.Getenv("API_HOST")
 
 	serverPort := 8080
-	if renderStatic == "" {
+	if renderDemo == "" {
 		serverPortEnv := os.Getenv("SERVER_PORT")
 		if serverPortEnv != "" {
 			var err error
@@ -54,17 +50,32 @@ func main() {
 		}
 	}
 
-	db, err := storage.Load(
+	if renderDemo != "" {
+		if renderDemo == "1" {
+			renderDemo = filepath.Join("..", "static", "demo")
+		}
+
+		fileInfo, err := os.Stat(renderDemo)
+		fatalIfErr(err)
+
+		if !fileInfo.IsDir() {
+			log.Fatalf("%s is not dir", fileInfo.Name())
+		}
+
+		buildDemoPages(filmsDir, tagsDir, renderDemo)
+
+		return
+	}
+
+	db := mustGetStorage(
 		filmsDir,
 		tagsDir,
-		minCountForTags,
-		minWeightForTags,
-		maxTagsPerFilm,
-		minTagsPerFilm,
+		[]models.FilmType{
+			models.FilmTypeFilm,
+		},
 	)
-	fatalIfErr(err)
 
-	templates := template.Must(template.ParseGlob("templates/index/*"))
+	templates := template.Must(template.ParseGlob("templates/partials/*"))
 	templates = template.Must(templates.ParseGlob("templates/*.html"))
 
 	log.Println("Templates: ", slices.Collect(func(yield func(string) bool) {
@@ -73,29 +84,68 @@ func main() {
 		}
 	}))
 
-	getFilmAction := getfilms.New(db, maxFilmsForShow)
-
 	r := routes.New(templates, db, apiHost)
 
-	if renderStatic != "" {
-		if renderStatic == "1" {
-			renderStatic = "../static"
-		}
+	getFilsmAction := getfilms.New(db, maxFilmsForShow)
+	fatalIfErr(r.Start(serverPort, getFilsmAction))
+}
 
-		fileInfo, err := os.Stat(renderStatic)
-		fatalIfErr(err)
-
-		if !fileInfo.IsDir() {
-			log.Fatalf("%s is not dir", fileInfo.Name())
-		}
-
-		fatalIfErr(r.RenderIndex(renderStatic))
-		fatalIfErr(r.RenderIndexDemo(renderStatic, getFilmAction))
-
-		log.Printf("Files saved to dir: %s\n", renderStatic)
-
-		return
+func fatalIfErr(err error) {
+	if err != nil {
+		log.Fatal(err)
 	}
+}
 
-	fatalIfErr(r.Start(serverPort, getFilmAction))
+func mustGetStorage(
+	filmsDir string,
+	tagsDir string,
+	filmTypes []models.FilmType,
+) *storage.Storage {
+	db, err := storage.Load(
+		storage.LoadParams{
+			FilmsDir:         filmsDir,
+			TagsDir:          tagsDir,
+			FilmTypes:        filmTypes,
+			MinCountForTags:  minCountForTags,
+			MinWeightForTags: minWeightForTags,
+			MaxTagsPerFilm:   maxTagsPerFilm,
+			MinTagsPerFilm:   minTagsPerFilm,
+		},
+	)
+	fatalIfErr(err)
+
+	return db
+}
+
+func buildDemoPages(filmsDir string, tagsDir string, outputDir string) {
+	templates := template.Must(template.ParseGlob("templates/partials/*"))
+	templates = template.Must(templates.ParseGlob("templates/demo/*.html"))
+
+	log.Println("Templates: ", slices.Collect(func(yield func(string) bool) {
+		for _, t := range templates.Templates() {
+			yield(t.Name())
+		}
+	}))
+
+	dbFilms := mustGetStorage(
+		filmsDir,
+		tagsDir,
+		[]models.FilmType{models.FilmTypeFilm},
+	)
+
+	dbSeries := mustGetStorage(
+		filmsDir,
+		tagsDir,
+		[]models.FilmType{
+			models.FilmTypeTvSeries,
+			models.FilmTypeMiniSeries,
+		},
+	)
+
+	r := routes.New(templates, nil, "")
+
+	fatalIfErr(r.WithDB(dbFilms).RenderFilmsDemo(outputDir))
+	fatalIfErr(r.WithDB(dbSeries).RenderSeriesDemo(outputDir))
+
+	log.Printf("Files saved to dir: %s\n", outputDir)
 }
