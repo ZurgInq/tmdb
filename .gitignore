@@ -12,6 +12,7 @@ reviews
 recomendations/static/*
 recomendations/app/bin/*
 !recomendations/app/bin/.keep
+recomendations/app/*.sh
 
 # other files
 temp/*.*

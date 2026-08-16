@@ -28,6 +28,16 @@ if [ ! -d "$outputdir" ]; then
   exit 1
 fi
 
+if [ ! -d "$outputdir/reviews" ]; then
+  echo "$outputdir/reviews does not exist."
+  exit 1
+fi
+
+if [ ! -d "$outputdir/films" ]; then
+  echo "$outputdir/films does not exist."
+  exit 1
+fi
+
 echo "outputdir = $outputdir"
 
 filmIds=$(

@@ -17,12 +17,16 @@ for filmId in $filmIds; do
 
     echo "Получение отзывов для фильма $filmId..."
 
-    curl -sS \
+    if ! curl -fsS \
         -X GET \
         "https://kinopoiskapiunofficial.tech/api/v2.2/films/${filmId}/reviews?page=1&order=USER_POSITIVE_RATING_DESC" \
         -H "accept: application/json" \
         -H "X-API-KEY: ${API_KEY}" \
-        -o "$outputFile"
+        -o "$outputFile"; then
+
+        echo "Ошибка: запрос не выполнен или файл '$outputFile' не сохранён" >&2
+        exit 1
+    fi
 
     echo "Сохранено: $outputFile"
     sleep 0.1

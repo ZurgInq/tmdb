@@ -70,9 +70,7 @@ func main() {
 	db := mustGetStorage(
 		filmsDir,
 		tagsDir,
-		[]models.FilmType{
-			models.FilmTypeFilm,
-		},
+		nil,
 	)
 
 	templates := template.Must(template.ParseGlob("templates/partials/*"))

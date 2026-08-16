@@ -3,6 +3,7 @@ package storage
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -55,6 +56,10 @@ func Load(params LoadParams) (*Storage, error) {
 		return nil, err
 	}
 
+	if len(films) == 1 {
+		return nil, errors.New("No films")
+	}
+
 	log.Println("Films count", len(films))
 
 	log.Println("Load tags from ", params.TagsDir)
@@ -62,6 +67,12 @@ func Load(params LoadParams) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(tagsFiles) == 1 {
+		return nil, errors.New("No tags")
+	}
+
+	log.Println("Tags files count", len(films))
 
 	tagToFilms := make(map[string][]int64)
 	tagsByFilm := make(map[int64][]*models.Tag)
@@ -116,6 +127,8 @@ func Load(params LoadParams) (*Storage, error) {
 			enabledTags[t] = tags[t]
 		}
 	}
+
+	log.Printf("Films: %d; Enabled tags %d; All tags %d", len(films), len(enabledTags), len(tags))
 
 	return &Storage{
 		Tags:         tags,
