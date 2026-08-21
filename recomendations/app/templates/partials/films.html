@@ -1,33 +1,18 @@
 {{define "partials/films.html"}}
-
 {{$allEmotions := .Emotions}}
-
-{{range .Films}}
-
+{{- range .Films -}}
 <div class="film">
-
     <hr>
-
     <h3><i class="bi bi-search"></i> <a target="_blank" href="{{.WebUrl}}">{{.NameRu}} | {{.Year}}</a></h3>
     <p><i class="bi bi-download"></i> <a target="_blank" href="https://rutracker.org/forum/tracker.php?nm={{.NameRu}} {{.Year}}">rutracker.org</a></p>
-
     <div class="tags">
         {{$filmEmotions := index $allEmotions .KinopoiskId}}
-        {{range $filmEmotions}}
+        {{- range $filmEmotions -}}
         <div data-tag-id="{{.Id}}" class="filmTag">{{template "partials/tag-icons.html" .}} {{.Name}}</div>
-        {{end}}
+        {{- end -}}
     </div>
-
 </div>
-
-{{else}}
-
-<div>
-
-Ничего не найдено.
-
-</div>
-
-{{end}}
-
+{{- else -}}
+<div>Ничего не найдено.</div>
+{{- end -}}
 {{end}}

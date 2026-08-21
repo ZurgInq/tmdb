@@ -16,7 +16,7 @@
 </head>
 
 <body>
-    {{if eq .PageType "Films"}}
+    {{- if eq .PageType "Films" -}}
     <nav class="nav-top">
         <ul class="nav-menu">
             <li><a href="series.html">Смотреть ТОП 250 Сериалов</a></li>
@@ -33,7 +33,7 @@
             Подбор фильмов по эмоциям и настроению
         </p>
     </div>
-    {{else}}{{if eq .PageType "Series"}}
+    {{- else -}}{{- if eq .PageType "Series" -}}
     <nav class="nav-top">
         <ul class="nav-menu">
             <li><a href="index.html">Смотреть ТОП 250 Фильмов</a></li>
@@ -50,26 +50,22 @@
             Подбор сериалов по эмоциям и настроению
         </p>
     </div>
-    {{else}}
-    {{end}}{{end}}
+    {{- else -}}
+    {{- end -}}{{- end -}}
 
     <h2>Список по эмоциям</h2>
 
     <div id="tags" class="tags">
         <label id="tagsModeLabel" class="tagsMode active"><input id="tagsMode" onclick="toggleTagsModeClick(this)"
                 type="checkbox" checked="checked">Мультивыбор</label>
-
         {{$tagToFilmIds := .TagToFilmIds}}
-        {{range $key, $tag := .Tags}}
-
+        {{- range $key, $tag := .Tags -}}
         {{$filmIds := index $tagToFilmIds $key}}
         <div class="tag" data-tag-id="{{$key}}" onclick="filterFilmsByTagsClick(this, '{{$key}}')">
-            {{template "partials/tag-icons.html" .}}
+            {{- template "partials/tag-icons.html" . -}}
             {{$tag.Name}} ({{len $filmIds}})
         </div>
-
-        {{end}}
-
+        {{- end -}}
     </div>
     <div>
         <h4>Найдено: <span id="total-counter"></spans>
